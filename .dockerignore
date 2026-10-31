@@ -1,0 +1,8 @@
+dist/
+build/
+*.exe
+*.ico
+__pycache__/
+*.pyc
+.git/
+*.bat

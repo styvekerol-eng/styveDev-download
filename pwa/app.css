@@ -1,0 +1,731 @@
+/* =============================================================================
+   STYVEDEV DOWNLOAD PRO — EXACT PIXEL-PERFECT REPLICA OF DOWNLOAD.PY
+   Full Width Desktop Layout + Responsive Mobile
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg-main: #0B0F19;
+  --card-bg: #131C2E;
+  --card-border: #1E293B;
+  --input-bg: #0D1525;
+  --input-border: #334155;
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-title: #60A5FA;
+  --badge-bg: #0F172A;
+  --badge-text: #38BDF8;
+  --badge-version-bg: #1E3A8A;
+  --badge-version-text: #93C5FD;
+  --badge-size-bg: #064E3B;
+  --badge-size-text: #34D399;
+  --btn-sec-bg: #1E293B;
+  --btn-sec-hover: #334155;
+  --btn-sec-text: #F8FAFC;
+  --accent-blue: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-danger: #DC2626;
+  --accent-danger-hover: #B91C1C;
+  --progress-track: #0F172A;
+  --status-color: #60A5FA;
+  --checkbox-text: #38BDF8;
+  --radius-card: 14px;
+  --radius-badge: 8px;
+  --radius-btn: 8px;
+}
+
+[data-theme="light"] {
+  --bg-main: #F1F5F9;
+  --card-bg: #FFFFFF;
+  --card-border: #E2E8F0;
+  --input-bg: #F8FAFC;
+  --input-border: #CBD5E1;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --text-title: #1E40AF;
+  --badge-bg: #F1F5F9;
+  --badge-text: #0369A1;
+  --badge-version-bg: #DBEAFE;
+  --badge-version-text: #1D4ED8;
+  --badge-size-bg: #DCFCE7;
+  --badge-size-text: #15803D;
+  --btn-sec-bg: #E2E8F0;
+  --btn-sec-hover: #CBD5E1;
+  --btn-sec-text: #1E293B;
+  --accent-blue: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-danger: #DC2626;
+  --accent-danger-hover: #B91C1C;
+  --progress-track: #E2E8F0;
+  --status-color: #2563EB;
+  --checkbox-text: #0284C7;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* =============================================================================
+   LAYOUT PLEINE LARGEUR (IDENTIQUE À LA FENÊTRE TKINTER DOWNLOAD.PY)
+   ============================================================================= */
+.app-wrapper {
+  width: 100%;
+  max-width: 1560px; /* S'adapte à tout écran sans laisser de vides latéraux géants */
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =============================================================================
+   CARTES (STYLE EXACT DE CUSTOMTKINTER)
+   ============================================================================= */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 16px 20px;
+  width: 100%;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+/* =============================================================================
+   1. EN-TÊTE SUPÉRIEUR (HEADER EXACT)
+   ============================================================================= */
+.header-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 16px 22px;
+  width: 100%;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.title-box .app-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-title);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-box .app-title span.sparkle {
+  color: #60A5FA;
+}
+
+.title-box .subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.controls-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-dropdown {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-btn);
+  font-size: 0.82rem;
+  font-weight: 700;
+  height: 36px;
+  padding: 0 14px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  transition: background 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 32px;
+}
+
+.theme-dropdown:hover {
+  background-color: var(--btn-sec-hover);
+}
+
+.badge-version {
+  background: var(--badge-version-bg);
+  color: var(--badge-version-text);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 7px 16px;
+  border-radius: var(--radius-badge);
+  letter-spacing: 0.04em;
+}
+
+.sparkle-icon {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(96,165,250,0.5));
+}
+
+.select-icon-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.select-icon-wrapper .control-icon {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+  color: var(--text-muted);
+  z-index: 1;
+}
+
+.select-icon-wrapper .theme-dropdown {
+  padding-left: 30px;
+}
+
+.btn-secondary {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text);
+  border: none;
+  border-radius: var(--radius-btn);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* =============================================================================
+   BARRE DES PLATEFORMES (COPIE CONFORME DU SCREENSHOT)
+   ============================================================================= */
+.platforms-bar {
+  padding: 12px 20px;
+}
+
+.platforms-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.p-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.platforms-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.p-pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--badge-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* =============================================================================
+   SECTION A : SAISIE DU LIEN
+   ============================================================================= */
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.status-pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 4px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.url-input {
+  flex: 1;
+  height: 46px;
+  padding: 0 16px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-btn);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.url-input:focus {
+  border-color: var(--accent-blue);
+}
+
+.url-input::placeholder {
+  color: var(--text-muted);
+}
+
+.btn {
+  height: 46px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text);
+}
+.btn-secondary:hover {
+  background: var(--btn-sec-hover);
+}
+
+.btn-icon-sq {
+  width: 46px;
+  padding: 0;
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  color: #FFFFFF;
+  padding: 0 24px;
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-danger {
+  background: var(--accent-danger);
+  color: #FFFFFF;
+}
+.btn-danger:hover {
+  background: var(--accent-danger-hover);
+}
+.btn-danger:disabled {
+  background: #374151;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.security-row {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--checkbox-text);
+  user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+}
+
+/* =============================================================================
+   SECTION B : APERÇU VIDÉO & TAILLE EXACTE
+   ============================================================================= */
+.preview-card {
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+}
+
+.preview-placeholder {
+  width: 100%;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  padding: 30px 10px;
+}
+
+.preview-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.thumb-wrapper {
+  width: 220px;
+  height: 124px;
+  flex-shrink: 0;
+  background: var(--input-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.meta-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta-author {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag svg {
+  flex-shrink: 0;
+}
+
+.tag-size {
+  background: var(--badge-size-bg);
+  color: var(--badge-size-text);
+  border-color: transparent;
+  animation: pulse-badge 2s infinite ease-in-out;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.82; }
+}
+
+.tag-platform {
+  background: var(--badge-version-bg);
+  color: var(--badge-version-text);
+  border-color: transparent;
+}
+
+.tag-info {
+  background: var(--badge-bg);
+  color: var(--text-main);
+}
+
+/* =============================================================================
+   SECTION C : OPTIONS DE TÉLÉCHARGEMENT & DESTINATION
+   ============================================================================= */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-row:last-child {
+  margin-bottom: 0;
+}
+
+.settings-label {
+  width: 170px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+
+.select-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.styled-select {
+  flex: 1;
+  height: 42px;
+  padding: 0 14px;
+  background: var(--btn-sec-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-btn);
+  color: var(--btn-sec-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px;
+  padding-right: 36px;
+}
+
+.styled-select:hover {
+  background-color: var(--btn-sec-hover);
+}
+
+.size-pill-tag {
+  background: var(--badge-size-bg);
+  color: var(--badge-size-text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.dest-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dest-input {
+  flex: 1;
+  height: 42px;
+  padding: 0 14px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-btn);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+}
+
+/* =============================================================================
+   SECTION D : PROGRESSION & STATISTIQUES
+   ============================================================================= */
+.status-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--status-color);
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  background: var(--progress-track);
+  border-radius: 7px;
+  height: 14px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 7px;
+  background: var(--accent-blue);
+  width: 0%;
+  transition: width 0.25s ease;
+}
+
+.stats-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* =============================================================================
+   SECTION E : BOUTONS D'ACTION (ARRÊT D'URGENCE & DOSSIER)
+   ============================================================================= */
+.action-buttons-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-download-big {
+  flex: 1;
+  height: 52px;
+  font-size: 1rem;
+}
+
+.btn-stop-big {
+  width: 150px;
+  height: 52px;
+  font-size: 0.92rem;
+}
+
+.btn-folder-big {
+  width: 130px;
+  height: 52px;
+  font-size: 0.92rem;
+}
+
+/* =============================================================================
+   HISTORIQUE & TOAST
+   ============================================================================= */
+.history-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 14px 0;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+}
+
+.history-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 999999;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--badge-size-text); }
+.toast.error { border-color: var(--accent-danger); }
+
+/* =============================================================================
+   RESPONSIVE MOBILE
+   ============================================================================= */
+@media (max-width: 768px) {
+  .app-wrapper { padding: 10px 12px; gap: 8px; }
+  .card, .header-card { padding: 12px 14px; }
+  .header-inner { flex-direction: column; align-items: flex-start; }
+  .controls-box { width: 100%; justify-content: space-between; }
+  .preview-content { flex-direction: column; }
+  .thumb-wrapper { width: 100%; height: 180px; }
+  .input-row { flex-wrap: wrap; }
+  .url-input { width: 100%; }
+  .settings-row { flex-direction: column; align-items: flex-start; }
+  .settings-label { width: 100%; }
+  .select-wrapper, .dest-wrapper { width: 100%; }
+  .action-buttons-row { flex-direction: column; }
+  .btn-stop-big, .btn-folder-big { width: 100%; }
+}

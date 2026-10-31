@@ -1,4 +1,4 @@
-const CACHE_NAME = 'styvedev-dl-v7.0';
+const CACHE_NAME = 'styvedev-dl-v8.0';
 const ASSETS = ['/', '/index.html', '/app.css', '/app.js'];
 
 self.addEventListener('install', e => {

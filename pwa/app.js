@@ -450,6 +450,7 @@ const previewTitle = document.getElementById('preview-title');
 const previewChannelText = document.getElementById('preview-channel-text');
 const previewSizeBadge = document.getElementById('preview-size-badge');
 const previewSizeText = document.getElementById('preview-size-text');
+const previewPlatformBadge = document.getElementById('preview-platform-badge');
 const previewPlatformIcon = document.getElementById('preview-platform-icon');
 const previewPlatformText = document.getElementById('preview-platform-text');
 const previewDurationText = document.getElementById('preview-duration-text');

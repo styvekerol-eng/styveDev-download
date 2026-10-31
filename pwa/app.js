@@ -660,8 +660,17 @@ async function analyzeUrl() {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Erreur serveur' }));
-      throw new Error(err.detail || `Erreur HTTP ${res.status}`);
+      let detail = `Erreur HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        if (err && err.detail) detail = err.detail;
+      } catch (_) {
+        try {
+          const txt = await res.text();
+          if (txt && txt.length < 200) detail = txt;
+        } catch (_) {}
+      }
+      throw new Error(detail);
     }
 
     const data = await res.json();
@@ -676,8 +685,12 @@ async function analyzeUrl() {
 
   } catch (err) {
     console.error('Erreur analyse:', err);
-    showToast(`${t('toastError')}: ${err.message}`, 'error');
-    statusText.textContent = `${t('toastError')}: ${err.message}`;
+    const msg = err.message || 'Échec de l\'analyse';
+    const displayMsg = msg.toLowerCase().startsWith('erreur') || msg.toLowerCase().startsWith('error')
+      ? msg
+      : `${t('toastError')}: ${msg}`;
+    showToast(displayMsg, 'error');
+    statusText.textContent = displayMsg;
   } finally {
     btnAnalyze.disabled = false;
     btnAnalyze.innerHTML = `

@@ -31,11 +31,14 @@ try:
 except ImportError:
     HAS_YTDLP = False
 
-try:
-    import imageio_ffmpeg
-    FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
-except Exception:
-    FFMPEG_PATH = None
+import shutil
+FFMPEG_PATH = shutil.which("ffmpeg")
+if not FFMPEG_PATH:
+    try:
+        import imageio_ffmpeg
+        FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        FFMPEG_PATH = None
 
 # =============================================================================
 # APPLICATION FASTAPI
@@ -85,54 +88,69 @@ def format_bytes(b):
 
 
 def compute_format_sizes(data):
-    duration = data.get('duration') or 0
-    formats = data.get('formats', [])
+    if not data or not isinstance(data, dict):
+        return {}
+    try:
+        duration = data.get('duration') or 0
+        formats = data.get('formats') or []
+        if not isinstance(formats, list):
+            formats = []
 
-    audio_streams = [f for f in formats if f.get('vcodec') == 'none' and f.get('acodec') != 'none']
-    best_audio_size = 0
-    if audio_streams:
-        audio_streams.sort(key=lambda x: (x.get('abr') or x.get('tbr') or 0), reverse=True)
-        ba = audio_streams[0]
-        best_audio_size = ba.get('filesize') or ba.get('filesize_approx') or 0
-        if not best_audio_size and duration and (ba.get('abr') or ba.get('tbr')):
-            best_audio_size = int(((ba.get('abr') or ba.get('tbr')) * 1000 / 8) * duration)
+        audio_streams = [f for f in formats if isinstance(f, dict) and f.get('vcodec') == 'none' and f.get('acodec') != 'none']
+        best_audio_size = 0
+        if audio_streams:
+            audio_streams.sort(key=lambda x: (x.get('abr') or x.get('tbr') or 0), reverse=True)
+            ba = audio_streams[0]
+            best_audio_size = ba.get('filesize') or ba.get('filesize_approx') or 0
+            if not best_audio_size and duration and (ba.get('abr') or ba.get('tbr')):
+                try:
+                    best_audio_size = int(((ba.get('abr') or ba.get('tbr')) * 1000 / 8) * duration)
+                except Exception:
+                    pass
 
-    sizes = {}
-    if duration:
-        sizes['mp3'] = int((320 * 1000 / 8) * duration)
-    else:
-        sizes['mp3'] = best_audio_size
-    sizes['m4a'] = best_audio_size
+        sizes = {}
+        if duration:
+            sizes['mp3'] = int((320 * 1000 / 8) * duration)
+        else:
+            sizes['mp3'] = best_audio_size
+        sizes['m4a'] = best_audio_size
 
-    for h in [2160, 1440, 1080, 720, 480, 360]:
-        matching = [
-            f for f in formats
-            if f.get('vcodec') != 'none' and (f.get('height') or 0) <= h and (f.get('height') or 0) > (h - 120)
-        ]
-        if matching:
-            matching.sort(key=lambda x: (x.get('height') or 0, x.get('tbr') or 0), reverse=True)
-            v = matching[0]
-            v_size = v.get('filesize') or v.get('filesize_approx') or 0
-            if not v_size and duration and v.get('tbr'):
-                v_size = int((v.get('tbr') * 1000 / 8) * duration)
-            total = v_size + (best_audio_size if v.get('acodec') == 'none' else 0)
-            sizes[f'{h}p'] = total
+        for h in [2160, 1440, 1080, 720, 480, 360]:
+            matching = [
+                f for f in formats
+                if isinstance(f, dict) and f.get('vcodec') != 'none' and (f.get('height') or 0) <= h and (f.get('height') or 0) > (h - 120)
+            ]
+            if matching:
+                matching.sort(key=lambda x: (x.get('height') or 0, x.get('tbr') or 0), reverse=True)
+                v = matching[0]
+                v_size = v.get('filesize') or v.get('filesize_approx') or 0
+                if not v_size and duration and v.get('tbr'):
+                    try:
+                        v_size = int((v.get('tbr') * 1000 / 8) * duration)
+                    except Exception:
+                        pass
+                total = v_size + (best_audio_size if v.get('acodec') == 'none' else 0)
+                sizes[f'{h}p'] = total
 
-    video_streams = [f for f in formats if f.get('vcodec') != 'none']
-    if video_streams:
-        video_streams.sort(key=lambda x: (x.get('height') or 0, x.get('tbr') or 0), reverse=True)
-        top = video_streams[0]
-        ts = top.get('filesize') or top.get('filesize_approx') or 0
-        if not ts and duration and top.get('tbr'):
-            ts = int((top.get('tbr') * 1000 / 8) * duration)
-        if top.get('acodec') == 'none':
-            ts += best_audio_size
-        sizes['best'] = ts
-    else:
-        sizes['best'] = data.get('filesize') or data.get('filesize_approx') or 0
+        video_streams = [f for f in formats if isinstance(f, dict) and f.get('vcodec') != 'none']
+        if video_streams:
+            video_streams.sort(key=lambda x: (x.get('height') or 0, x.get('tbr') or 0), reverse=True)
+            top = video_streams[0]
+            ts = top.get('filesize') or top.get('filesize_approx') or 0
+            if not ts and duration and top.get('tbr'):
+                try:
+                    ts = int((top.get('tbr') * 1000 / 8) * duration)
+                except Exception:
+                    pass
+            if top.get('acodec') == 'none':
+                ts += best_audio_size
+            sizes['best'] = ts
+        else:
+            sizes['best'] = data.get('filesize') or data.get('filesize_approx') or 0
 
-    # Ajouter les tailles formatées
-    return {k: {'bytes': v, 'human': format_bytes(v)} for k, v in sizes.items()}
+        return {k: {'bytes': v, 'human': format_bytes(v)} for k, v in sizes.items()}
+    except Exception as e:
+        return {'best': {'bytes': 0, 'human': 'Calculée'}}
 
 
 # =============================================================================
@@ -202,18 +220,39 @@ async def open_folder():
         return {"error": str(e)}
 
 
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Sec-Fetch-Mode': 'navigate',
+}
+
+DEFAULT_EXTRACTOR_ARGS = {
+    'youtube': {
+        'player_client': ['android', 'web', 'mweb']
+    }
+}
+
+
 @app.post("/api/analyze")
 async def analyze_url(req: AnalyzeRequest):
     url = clean_video_url(req.url)
     if not url:
-        raise HTTPException(status_code=400, detail="URL invalide")
+        raise HTTPException(status_code=400, detail="Veuillez entrer une URL valide")
 
     if not HAS_YTDLP:
-        raise HTTPException(status_code=500, detail="yt-dlp non installé")
+        raise HTTPException(status_code=500, detail="Moteur yt-dlp non installé sur le serveur")
 
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, _analyze_sync, url)
-    return result
+    try:
+        result = await loop.run_in_executor(None, _analyze_sync, url)
+        return result
+    except Exception as e:
+        err_msg = str(e)
+        if "ERROR:" in err_msg:
+            err_msg = err_msg.split("ERROR:")[-1].strip()
+        print(f"[!] Erreur analyze: {err_msg}")
+        raise HTTPException(status_code=400, detail=err_msg[:250])
 
 
 def _analyze_sync(url: str):
@@ -222,13 +261,19 @@ def _analyze_sync(url: str):
         'no_warnings': True,
         'skip_download': True,
         'noplaylist': True,
-        'playlist_items': '1'
+        'playlist_items': '1',
+        'socket_timeout': 20,
+        'nocheckcertificate': True,
+        'http_headers': DEFAULT_HEADERS,
+        'extractor_args': DEFAULT_EXTRACTOR_ARGS
     }
     if FFMPEG_PATH:
         ydl_opts['ffmpeg_location'] = FFMPEG_PATH
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         data = ydl.extract_info(url, download=False)
+        if not data:
+            raise ValueError("Impossible de récupérer les informations de ce média.")
         if 'entries' in data and data['entries']:
             data = data['entries'][0]
 
@@ -300,6 +345,10 @@ async def download_websocket(websocket: WebSocket):
                 'no_warnings': True,
                 'noplaylist': True,
                 'playlist_items': '1',
+                'socket_timeout': 30,
+                'nocheckcertificate': True,
+                'http_headers': DEFAULT_HEADERS,
+                'extractor_args': DEFAULT_EXTRACTOR_ARGS,
                 'progress_hooks': [progress_hook]
             }
             if FFMPEG_PATH:

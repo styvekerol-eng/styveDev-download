@@ -220,18 +220,54 @@ async def open_folder():
         return {"error": str(e)}
 
 
-DEFAULT_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Sec-Fetch-Mode': 'navigate',
-}
+import random
 
+# Rotation d'User-Agents pour éviter le blocage IP sur les serveurs cloud
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:133.0) Gecko/20100101 Firefox/133.0',
+]
+
+def get_headers():
+    return {
+        'User-Agent': random.choice(USER_AGENTS),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+    }
+
+# tv_embedded + ios = bypass bot check SANS cookies (le plus fiable sur serveurs)
+# Fallback: mweb, then android
 DEFAULT_EXTRACTOR_ARGS = {
     'youtube': {
-        'player_client': ['android', 'web', 'mweb']
+        'player_client': ['tv_embedded', 'ios', 'android', 'mweb'],
+        'skip': ['translated_subs'],
     }
 }
+
+# Options de base communes aux deux fonctions
+def base_ydl_opts():
+    return {
+        'quiet': True,
+        'no_warnings': True,
+        'noplaylist': True,
+        'playlist_items': '1',
+        'socket_timeout': 30,
+        'nocheckcertificate': True,
+        'http_headers': get_headers(),
+        'extractor_args': DEFAULT_EXTRACTOR_ARGS,
+        'retries': 3,
+        'fragment_retries': 3,
+        'ignoreerrors': False,
+    }
 
 
 @app.post("/api/analyze")
@@ -256,39 +292,59 @@ async def analyze_url(req: AnalyzeRequest):
 
 
 def _analyze_sync(url: str):
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'noplaylist': True,
-        'playlist_items': '1',
-        'socket_timeout': 20,
-        'nocheckcertificate': True,
-        'http_headers': DEFAULT_HEADERS,
-        'extractor_args': DEFAULT_EXTRACTOR_ARGS
-    }
-    if FFMPEG_PATH:
-        ydl_opts['ffmpeg_location'] = FFMPEG_PATH
+    """Analyse une URL avec stratégie multi-client pour contourner l'anti-bot YouTube."""
+    # Stratégie : essayer plusieurs player_clients en cascade
+    player_clients_strategies = [
+        ['tv_embedded', 'ios'],          # Meilleur bypass sans cookies
+        ['android', 'mweb'],             # Fallback Android
+        ['web'],                          # Dernier recours
+    ]
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        data = ydl.extract_info(url, download=False)
-        if not data:
-            raise ValueError("Impossible de récupérer les informations de ce média.")
-        if 'entries' in data and data['entries']:
-            data = data['entries'][0]
+    last_error = None
+    for clients in player_clients_strategies:
+        try:
+            ydl_opts = base_ydl_opts()
+            ydl_opts['skip_download'] = True
+            ydl_opts['socket_timeout'] = 25
+            ydl_opts['extractor_args'] = {
+                'youtube': {
+                    'player_client': clients,
+                    'skip': ['translated_subs'],
+                }
+            }
+            if FFMPEG_PATH:
+                ydl_opts['ffmpeg_location'] = FFMPEG_PATH
 
-        sizes = compute_format_sizes(data)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                data = ydl.extract_info(url, download=False)
+                if not data:
+                    raise ValueError("Impossible de récupérer les informations de ce média.")
+                if 'entries' in data and data['entries']:
+                    data = data['entries'][0]
 
-        return {
-            'title': data.get('title', 'Titre inconnu'),
-            'uploader': data.get('uploader') or data.get('channel') or 'Auteur inconnu',
-            'duration': data.get('duration', 0),
-            'view_count': data.get('view_count', 0),
-            'thumbnail': data.get('thumbnail'),
-            'extractor': data.get('extractor_key') or data.get('extractor', 'Web'),
-            'url': url,
-            'sizes': sizes
-        }
+                sizes = compute_format_sizes(data)
+                return {
+                    'title': data.get('title', 'Titre inconnu'),
+                    'uploader': data.get('uploader') or data.get('channel') or 'Auteur inconnu',
+                    'duration': data.get('duration', 0),
+                    'view_count': data.get('view_count', 0),
+                    'thumbnail': data.get('thumbnail'),
+                    'extractor': data.get('extractor_key') or data.get('extractor', 'Web'),
+                    'url': url,
+                    'sizes': sizes
+                }
+        except Exception as e:
+            last_error = e
+            err_str = str(e).lower()
+            # Si c'est une erreur bot/auth, on essaie le prochain client
+            if any(kw in err_str for kw in ['sign in', 'bot', 'confirm', 'login', 'auth']):
+                print(f"[!] Client {clients} bloqué par anti-bot, essai suivant...")
+                continue
+            # Autre erreur (URL invalide, vidéo privée...) → on relance directement
+            raise
+
+    # Tous les clients ont échoué
+    raise last_error or ValueError("Impossible d'analyser cette URL (anti-bot YouTube)")
 
 
 # =============================================================================
@@ -339,53 +395,81 @@ async def download_websocket(websocket: WebSocket):
                 asyncio.run_coroutine_threadsafe(websocket.send_json(msg), loop)
 
         def run_download():
-            ydl_opts = {
-                'outtmpl': os.path.join(out_dir, '%(title).120B [%(id)s].%(ext)s'),
-                'quiet': True,
-                'no_warnings': True,
-                'noplaylist': True,
-                'playlist_items': '1',
-                'socket_timeout': 30,
-                'nocheckcertificate': True,
-                'http_headers': DEFAULT_HEADERS,
-                'extractor_args': DEFAULT_EXTRACTOR_ARGS,
-                'progress_hooks': [progress_hook]
-            }
-            if FFMPEG_PATH:
-                ydl_opts['ffmpeg_location'] = FFMPEG_PATH
-
+            """Téléchargement avec stratégie multi-client anti-bot."""
+            # Sélection du format
             if fmt == "mp3":
                 if FFMPEG_PATH:
-                    ydl_opts['format'] = 'bestaudio/best'
-                    ydl_opts['postprocessors'] = [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '320'}]
+                    fmt_str = 'bestaudio/best'
+                    postprocs = [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '320'}]
                 else:
-                    ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
+                    fmt_str = 'bestaudio[ext=m4a]/bestaudio/best'
+                    postprocs = []
             elif fmt == "m4a":
-                ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
+                fmt_str = 'bestaudio[ext=m4a]/bestaudio/best'
+                postprocs = []
             elif "1080" in fmt:
-                ydl_opts['format'] = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best'
-                ydl_opts['merge_output_format'] = 'mp4'
+                fmt_str = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best'
+                postprocs = []
             elif "720" in fmt:
-                ydl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
-                ydl_opts['merge_output_format'] = 'mp4'
+                fmt_str = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                postprocs = []
             elif "480" in fmt:
-                ydl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best'
-                ydl_opts['merge_output_format'] = 'mp4'
+                fmt_str = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best'
+                postprocs = []
             elif "360" in fmt:
-                ydl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
-                ydl_opts['merge_output_format'] = 'mp4'
+                fmt_str = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
+                postprocs = []
             else:
-                ydl_opts['format'] = 'bestvideo+bestaudio/best'
-                ydl_opts['merge_output_format'] = 'mp4'
+                fmt_str = 'bestvideo+bestaudio/best'
+                postprocs = []
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                if 'entries' in info and info['entries']:
-                    info = info['entries'][0]
-                filename = ydl.prepare_filename(info)
-                if fmt == "mp3" and FFMPEG_PATH:
-                    filename = os.path.splitext(filename)[0] + ".mp3"
-                return filename
+            # Stratégie multi-client (même cascade que l'analyse)
+            player_clients_strategies = [
+                ['tv_embedded', 'ios'],
+                ['android', 'mweb'],
+                ['web'],
+            ]
+
+            last_error = None
+            for clients in player_clients_strategies:
+                try:
+                    ydl_opts = base_ydl_opts()
+                    ydl_opts['outtmpl'] = os.path.join(out_dir, '%(title).120B [%(id)s].%(ext)s')
+                    ydl_opts['progress_hooks'] = [progress_hook]
+                    ydl_opts['format'] = fmt_str
+                    ydl_opts['extractor_args'] = {
+                        'youtube': {
+                            'player_client': clients,
+                            'skip': ['translated_subs'],
+                        }
+                    }
+                    if postprocs:
+                        ydl_opts['postprocessors'] = postprocs
+                    if 'p' in fmt and fmt != 'mp3':
+                        ydl_opts['merge_output_format'] = 'mp4'
+                    if FFMPEG_PATH:
+                        ydl_opts['ffmpeg_location'] = FFMPEG_PATH
+
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(url, download=True)
+                        if 'entries' in info and info['entries']:
+                            info = info['entries'][0]
+                        filename = ydl.prepare_filename(info)
+                        if fmt == "mp3" and FFMPEG_PATH:
+                            filename = os.path.splitext(filename)[0] + ".mp3"
+                        return filename
+
+                except Exception as e:
+                    err_str = str(e)
+                    if 'CANCELLED_BY_USER' in err_str:
+                        raise  # Annulation volontaire → ne pas réessayer
+                    last_error = e
+                    if any(kw in err_str.lower() for kw in ['sign in', 'bot', 'confirm', 'login', 'auth']):
+                        print(f"[!] Client {clients} bloqué (download), essai suivant...")
+                        continue
+                    raise
+
+            raise last_error or Exception("Échec du téléchargement (anti-bot YouTube)")
 
         try:
             filename = await loop.run_in_executor(None, run_download)
